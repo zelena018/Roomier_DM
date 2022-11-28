@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Roomier</string>
+
+    //Botones
+    <string name="btn_guardarMostrar">Guardar</string>
+    //Para boton "Guardar" en pantalla de mostrar habitos
+</resources>
