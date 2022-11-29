@@ -4,4 +4,6 @@
     //Botones
     <string name="btn_guardarMostrar">Guardar</string>
     //Para boton "Guardar" en pantalla de mostrar habitos
+
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false"> AIzaSyARbN2IZD7rHFvngO3n6tnR7JeuIuRqdLc</string>
 </resources>
