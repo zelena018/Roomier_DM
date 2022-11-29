@@ -4,8 +4,8 @@
     package="com.fime.roomier">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
@@ -18,10 +18,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Roomier"
         tools:targetApi="31">
+        <activity
+            android:name=".Mapa"
+            android:exported="false" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
+
         <activity
             android:name=".consejos_pp"
             android:exported="false" />
@@ -39,13 +43,13 @@
         </activity>
         <activity
             android:name=".segunda_perfil"
-            android:exported="false"></activity>
+            android:exported="false" />
         <activity
             android:name=".primera_perfil"
-            android:exported="false"></activity>
+            android:exported="false" />
         <activity
             android:name=".MainActivity"
-            android:exported="false"></activity>
+            android:exported="false" />
     </application>
 
 </manifest>

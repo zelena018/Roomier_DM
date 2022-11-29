@@ -13,6 +13,8 @@ class MainActivity : AppCompatActivity() {
 
         //Para hacer clic en boton "guardar" y regresar a menu "editar perfil"
         val btn_guardarCambios: Button = findViewById(R.id.btn_guardarMostrar)
+
+
         btn_guardarCambios.setOnClickListener {
 
             val intent: Intent = Intent(this, segunda_perfil::class.java)
@@ -35,5 +37,12 @@ class MainActivity : AppCompatActivity() {
             val intent: Intent = Intent(this, primera_perfil::class.java)
             startActivity(intent)
         }
+
+        val btn_iconoMapa: ImageView = findViewById(R.id.icono_consejos)
+        btn_iconoMapa.setOnClickListener(){
+
+        }
+
+
     }
 }
