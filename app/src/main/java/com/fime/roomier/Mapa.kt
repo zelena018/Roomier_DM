@@ -43,7 +43,7 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
     private var userLat:Double = 0.0
     private var userLong:Double = 0.0
 
-    val items = arrayOf("Restaurantes","Tiendas", "Gimnasio")
+    val items = arrayOf("restaurant","store", "gym")
     lateinit var autoCompleteText:AutoCompleteTextView
     lateinit var adapterItems: ArrayAdapter<String>
 
@@ -63,9 +63,9 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
             AdapterView.OnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
                 var item:String =  parent.getItemAtPosition(position).toString()
                 Toast.makeText(applicationContext, "Item: ${item}", Toast.LENGTH_SHORT).show()
-
-
+                getInfo(item)
             }
+
 
 
 
@@ -118,10 +118,20 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
 
     }
 
-    fun createMarker(lati:Double, longi:Double, name: String) {
+    fun createMarker(lati:Double, longi:Double, name: String, type:Int) {
         //val coordinates = LatLng(25.7299374,-100.2096866)
         val coordinates = LatLng(lati,longi)
-        val marker = MarkerOptions().position(coordinates).title(name).icon(BitmapDescriptorFactory.fromResource(R.drawable.user_blue_icon))
+        val marker:MarkerOptions
+        if(type == 1){
+            marker = MarkerOptions().position(coordinates).title(name).icon(BitmapDescriptorFactory.fromResource(R.drawable.restaurant_icon))
+        }else if(type == 2){
+            marker = MarkerOptions().position(coordinates).title(name).icon(BitmapDescriptorFactory.fromResource(R.drawable.store_icon))
+        }else if(type == 3){
+            marker = MarkerOptions().position(coordinates).title(name).icon(BitmapDescriptorFactory.fromResource(R.drawable.gym_icon))
+        }else{
+            marker = MarkerOptions().position(coordinates).title(name).icon(BitmapDescriptorFactory.fromResource(R.drawable.user_blue_icon))
+        }
+
 
 
         val pointer = mMap.addMarker(marker)
@@ -155,7 +165,7 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
                         var distanceInMeters = currentLocation.distanceTo(home)
                         Log.d(TAG, "Distance in meters ->  ${distanceInMeters}")
 
-                        addLine(currentLocation,home)
+                        //addLine(currentLocation,home)
 
                         //Location.distanceBetween(userLat, userLong, 25.7299374, -100.2096866, arr1)
                         //Log.d(TAG, "Distance -> ${arr1[0]} ")
@@ -163,15 +173,15 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
 
 
 
-                        moveCamera(LatLng(userLat, userLong), DEFAULT_ZOOM, "My location")
-                        drawCircle(LatLng(userLat, userLong))
+                        moveCamera(LatLng(userLat, userLong), 16f, "My location")
+                        drawCircle(LatLng(userLat, userLong), 400.0)
 
 
 
 
                         getAddressName()
 
-                        cargaTabla()
+                        //cargaTabla()
 
                     }else{
                         Log.d(TAG, "onComplete: current location is null")
@@ -247,7 +257,7 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
 
 
 
-                    createMarker(lati, longi, name)
+                    createMarker(lati, longi, name,1)
 
                     val loc2 = Location("")
                     loc2.latitude = lati
@@ -337,7 +347,7 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
         return false
     }
 
-    private fun drawCircle(point: LatLng) {
+    private fun drawCircle(point: LatLng, radio:Double) {
 
         // Instantiating CircleOptions to draw a circle around the marker
         val circleOptions = CircleOptions()
@@ -346,7 +356,7 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
         circleOptions.center(point)
 
         // Radius of the circle
-        circleOptions.radius(2500.0)
+        circleOptions.radius(radio)
 
         // Border color of the circle
         circleOptions.strokeColor(Color.BLACK)
@@ -466,6 +476,122 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
                 Log.d(TAG, "cargaTabla: Address -> $address")
 
                 addressTxt.setText(address)
+
+            }catch (e: JSONException){
+                e.printStackTrace()
+            }
+            }, {
+                    error ->  Toast.makeText(this,"Error $error", Toast.LENGTH_LONG).show()
+            })
+        queue.add(myJsonObjectRequest)
+    }
+
+    private fun getInfo(type:String)
+    {
+        mMap.clear()
+        var queue = Volley.newRequestQueue(this)
+        var lati:Double
+        var longi:Double
+        var precios:Double = 0.0
+        var cont:Int = 0
+        var promedio:Double = 0.0
+        var distance:Double = 99999.0
+        var distanceInMeters:Float
+
+        var address:String = ""
+        var actualName:String = ""
+
+
+
+        Log.d(TAG, "UserLat -> ${userLat} ")
+        Log.d(TAG, "UserLat -> ${userLong} ")
+        var url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?fields=price_level&location=${userLat}%2C${userLong}&radius=2000&type=${type}&key=AIzaSyDV6aFItX960hrbAaI229-8iDa3xTZ-RXU"
+        //Log.d(TAG, "https://maps.googleapis.com/maps/api/place/nearbysearch/json?fields=price_level&location=${userLat}%2C${userLong}&radius=2500&type=restaurant&key=AIzaSyDV6aFItX960hrbAaI229-8iDa3xTZ-RXU")
+        var myJsonObjectRequest = JsonObjectRequest(
+            Request.Method.GET,url,null,
+            {
+                    response ->  try{
+                var myJsonArray = response.getJSONArray("results")
+                for(i in 0 until myJsonArray.length()){
+                    var myJSONObject = myJsonArray.getJSONObject(i)
+                    /*
+                    val registro = LayoutInflater.from(this).inflate(R.layout.table_row_np,null,false)
+                    val colName = registro.findViewById<View>(R.id.columnaNombre) as TextView
+                    val colPrice = registro.findViewById<View>(R.id.columnaEmail) as TextView
+                    val colLatitude = registro.findViewById<View>(R.id.colEditar)
+                    val colBorrar = registro.findViewById<View>(R.id.colBorrar)
+                    */
+
+
+                    var name = myJSONObject.getString("name")
+                    Log.d(TAG, "Nombre:  ${name}" )
+
+                    try{
+                        var price = myJSONObject.getString("price_level")
+                        Log.d(TAG, "Price rating:  ${price}" )
+                        precios += price.toDouble()
+                    }catch (e: Exception){
+                        Log.d(TAG, "ERROR -> :  ${ e.message}" )
+                        cont++
+                    }
+
+                    //colPrice.text=myJSONObject.getString("price_level")
+
+
+
+                    var geometry = myJSONObject.getJSONObject("geometry")
+                    var location = geometry.getJSONObject("location")
+
+                    lati = location.getString("lat").toDouble()
+                    longi = location.getString("lng").toDouble()
+                    Log.d(TAG, "Latitude: ${location.getString("lat")}")
+                    Log.d(TAG, "Latitude: ${location.getString("lng")}")
+
+
+
+                    if(type.equals("restaurant")){
+                        createMarker(lati, longi, name,1)
+                    }else if(type.equals("store")){
+                        createMarker(lati, longi, name,2)
+                    }else if(type.equals("gym")){
+                        createMarker(lati, longi, name,3)
+                    }
+
+
+                    val loc2 = Location("")
+                    loc2.latitude = lati
+                    loc2.longitude = longi
+
+                    distanceInMeters = currentLocation.distanceTo(loc2)
+                    if(distanceInMeters < distance ){
+                        distance = distanceInMeters.toDouble()
+                        actualName = name
+                        address = myJSONObject.getString("vicinity")
+
+
+                    }
+
+                    addLine(currentLocation, loc2)
+
+
+
+
+
+                    //colEditar.id=myJSONObject.getString("id").toInt()
+                    //colBorrar.id=myJSONObject.getString("id").toInt()
+
+
+
+                }
+
+                promedio = precios / (myJsonArray.length() - cont)
+                Log.d(TAG, "EL PROMEDIO DE COSTO DE LA ZONA ES -> ${promedio} ")
+                Log.d(TAG, "cargaTabla: MENOR DISTANCIA -> $distance")
+                Log.d(TAG, "cargaTabla: PLACE NAME -> $actualName")
+                Log.d(TAG, "cargaTabla: Address -> $address")
+
+                moveCamera(LatLng(userLat, userLong), 13.5f, "My location")
+                drawCircle(LatLng(userLat, userLong), 2000.0)
 
             }catch (e: JSONException){
                 e.printStackTrace()
