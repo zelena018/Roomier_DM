@@ -4,11 +4,11 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Location
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.android.volley.Request
@@ -18,12 +18,13 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.GoogleMap.OnMapClickListener
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.android.gms.tasks.Task
-import com.google.android.material.internal.ViewUtils.hideKeyboard
 import org.json.JSONException
+
 
 class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
     private lateinit var mMap: GoogleMap
@@ -33,6 +34,7 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
     var address:String = ""
     lateinit var addressTxt: TextView
     lateinit var txtCosto: TextView
+    lateinit var btnUpdate: Button
 
     private val FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION
     private val COURSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION
@@ -45,8 +47,10 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
     private var userLong:Double = 0.0
 
     val items = arrayOf("restaurant","store", "gym")
+    var markers = arrayListOf<MarkerOptions>()
     lateinit var autoCompleteText:AutoCompleteTextView
     lateinit var adapterItems: ArrayAdapter<String>
+    lateinit var puntero: MarkerOptions
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,10 +60,27 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
         addressTxt= findViewById(R.id.txtAddress)
         autoCompleteText = findViewById(R.id.autoCompleteText)
         txtCosto = findViewById(R.id.txtCosto)
+        btnUpdate = findViewById(R.id.btn_update)
 
         adapterItems = ArrayAdapter(this, R.layout.list_options, items)
         autoCompleteText.setAdapter(adapterItems)
 
+
+
+
+        btnUpdate.setOnClickListener{
+            var ubicacion:LatLng
+            ubicacion = puntero.position
+            userLat = ubicacion.latitude
+            userLong = ubicacion.longitude
+
+            markers.removeAll(markers)
+            updateMap()
+            getAddressName()
+            moveCamera(LatLng(userLat, userLong), 16f, "My location")
+            //drawCircle(LatLng(userLat, userLong), 400.0)
+
+        }
         // When click the hint selection, will trigger close keyboard function
         autoCompleteText.onItemClickListener =
             AdapterView.OnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
@@ -67,6 +88,8 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
                 Toast.makeText(applicationContext, "Item: ${item}", Toast.LENGTH_SHORT).show()
                 getInfo(item)
             }
+
+
 
 
 
@@ -92,6 +115,20 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         mMap.setOnMarkerClickListener(this)
+
+        mMap.setOnMapClickListener(OnMapClickListener { point ->
+            verifyMarker()
+            val marker = MarkerOptions().position(LatLng(point.latitude, point.longitude))
+                .title("New")
+            puntero = marker
+            markers.add(marker)
+            updateMap()
+            //mMap.addMarker(marker)
+
+
+
+            println(point.latitude.toString() + "---" + point.longitude)
+        })
 
 
         //createMarker(25.7299374,-100.2096866)
@@ -126,18 +163,22 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
         val marker:MarkerOptions
         if(type == 1){
             marker = MarkerOptions().position(coordinates).title(name).icon(BitmapDescriptorFactory.fromResource(R.drawable.restaurant_icon))
+            markers.add(marker)
         }else if(type == 2){
             marker = MarkerOptions().position(coordinates).title(name).icon(BitmapDescriptorFactory.fromResource(R.drawable.store_icon))
+            markers.add(marker)
         }else if(type == 3){
             marker = MarkerOptions().position(coordinates).title(name).icon(BitmapDescriptorFactory.fromResource(R.drawable.gym_icon))
+            markers.add(marker)
         }else{
             marker = MarkerOptions().position(coordinates).title(name).icon(BitmapDescriptorFactory.fromResource(R.drawable.user_blue_icon))
+            markers.add(marker)
         }
 
 
 
-        val pointer = mMap.addMarker(marker)
-        pointer?.tag = 0
+        //val pointer = mMap.addMarker(marker)
+        //pointer?.tag = 0
 
     }
 
@@ -502,6 +543,7 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
     private fun getInfo(type:String)
     {
         mMap.clear()
+        markers.removeAll(markers)
         var queue = Volley.newRequestQueue(this)
         var lati:Double
         var longi:Double
@@ -571,6 +613,8 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
                     }
 
 
+
+
                     val loc2 = Location("")
                     loc2.latitude = lati
                     loc2.longitude = longi
@@ -597,15 +641,17 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
 
                 }
 
+                updateMap()
+
                 promedio = precios / (myJsonArray.length() - cont)
 
                 if(promedio < 1.50){
                     txtCosto.setText("Barato")
                     txtCosto.setTextColor(Color.parseColor("#66bb6a"))
-                }else if(promedio >= 1.50 && promedio < 2.30 ){
+                }else if(promedio >= 1.50 && promedio < 2.00 ){
                     txtCosto.setText("Moderado")
                     txtCosto.setTextColor(Color.parseColor("#f9a825"))
-                }else if(promedio >= 2.30){
+                }else if(promedio >= 2.00){
                     txtCosto.setText("Caro")
                     txtCosto.setTextColor(Color.parseColor("#d32f2f"))
                 }else{
@@ -614,13 +660,15 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
                 }
 
 
+
+
                 Log.d(TAG, "EL PROMEDIO DE COSTO DE LA ZONA ES -> ${promedio} ")
                 Log.d(TAG, "cargaTabla: MENOR DISTANCIA -> $distance")
                 Log.d(TAG, "cargaTabla: PLACE NAME -> $actualName")
                 Log.d(TAG, "cargaTabla: Address -> $address")
 
                 moveCamera(LatLng(userLat, userLong), 13.5f, "My location")
-                drawCircle(LatLng(userLat, userLong), 2000.0)
+                //drawCircle(LatLng(userLat, userLong), 2000.0)
 
             }catch (e: JSONException){
                 e.printStackTrace()
@@ -629,6 +677,25 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
                     error ->  Toast.makeText(this,"Error $error", Toast.LENGTH_LONG).show()
             })
         queue.add(myJsonObjectRequest)
+    }
+
+    private fun updateMap(){
+
+        mMap.clear()
+        for (marker:MarkerOptions in markers){
+            mMap.addMarker(marker)
+        }
+
+        drawCircle(LatLng(userLat, userLong), 2000.0)
+    }
+
+    private fun verifyMarker(){
+        for(marker:MarkerOptions in markers){
+            if(marker.title.equals("New")){
+                val indexMarker = markers.indexOf(marker)
+                markers.removeAt(indexMarker)
+            }
+        }
     }
 
 
