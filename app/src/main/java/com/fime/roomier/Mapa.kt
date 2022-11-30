@@ -32,6 +32,7 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
 
     var address:String = ""
     lateinit var addressTxt: TextView
+    lateinit var txtCosto: TextView
 
     private val FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION
     private val COURSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION
@@ -54,6 +55,7 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
 
         addressTxt= findViewById(R.id.txtAddress)
         autoCompleteText = findViewById(R.id.autoCompleteText)
+        txtCosto = findViewById(R.id.txtCosto)
 
         adapterItems = ArrayAdapter(this, R.layout.list_options, items)
         autoCompleteText.setAdapter(adapterItems)
@@ -286,6 +288,17 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
                 }
 
                 promedio = precios / (myJsonArray.length() - cont)
+
+                if(promedio <= 1.99){
+                    txtCosto.setText("Barato")
+                    txtCosto.setTextColor(Color.parseColor("#66bb6a"))
+                }else if(promedio >= 2 && promedio < 3){
+                    txtCosto.setText("Moderado")
+                    txtCosto.setTextColor(Color.parseColor("#ffeb3b"))
+                }else if(promedio >= 3){
+                    txtCosto.setText("Caro")
+                    txtCosto.setTextColor(Color.parseColor("#f44336"))
+                }
                 Log.d(TAG, "EL PROMEDIO DE COSTO DE LA ZONA ES -> ${promedio} ")
                 Log.d(TAG, "cargaTabla: MENOR DISTANCIA -> $distance")
                 Log.d(TAG, "cargaTabla: PLACE NAME -> $actualName")
@@ -585,6 +598,22 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
                 }
 
                 promedio = precios / (myJsonArray.length() - cont)
+
+                if(promedio < 1.50){
+                    txtCosto.setText("Barato")
+                    txtCosto.setTextColor(Color.parseColor("#66bb6a"))
+                }else if(promedio >= 1.50 && promedio < 2.30 ){
+                    txtCosto.setText("Moderado")
+                    txtCosto.setTextColor(Color.parseColor("#f9a825"))
+                }else if(promedio >= 2.30){
+                    txtCosto.setText("Caro")
+                    txtCosto.setTextColor(Color.parseColor("#d32f2f"))
+                }else{
+                    txtCosto.setText("Moderado")
+                    txtCosto.setTextColor(Color.parseColor("#f9a825"))
+                }
+
+
                 Log.d(TAG, "EL PROMEDIO DE COSTO DE LA ZONA ES -> ${promedio} ")
                 Log.d(TAG, "cargaTabla: MENOR DISTANCIA -> $distance")
                 Log.d(TAG, "cargaTabla: PLACE NAME -> $actualName")
