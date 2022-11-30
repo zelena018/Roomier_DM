@@ -35,6 +35,7 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
     lateinit var addressTxt: TextView
     lateinit var txtCosto: TextView
     lateinit var btnUpdate: Button
+    lateinit var btnReset: Button
 
     private val FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION
     private val COURSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION
@@ -45,12 +46,17 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
     private lateinit var currentLocation: Location
     private var userLat:Double = 0.0
     private var userLong:Double = 0.0
+    private var realLatitude:Double = 0.0
+    private var realLongitude:Double = 0.0
 
-    val items = arrayOf("restaurant","store", "gym")
+    val items = arrayOf("comida","tiendas", "gym")
+
     var markers = arrayListOf<MarkerOptions>()
     lateinit var autoCompleteText:AutoCompleteTextView
     lateinit var adapterItems: ArrayAdapter<String>
     lateinit var puntero: MarkerOptions
+
+    var bandera:Boolean = true
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,6 +67,7 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
         autoCompleteText = findViewById(R.id.autoCompleteText)
         txtCosto = findViewById(R.id.txtCosto)
         btnUpdate = findViewById(R.id.btn_update)
+        btnReset = findViewById(R.id.btn_reset)
 
         adapterItems = ArrayAdapter(this, R.layout.list_options, items)
         autoCompleteText.setAdapter(adapterItems)
@@ -77,8 +84,22 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
             markers.removeAll(markers)
             updateMap()
             getAddressName()
-            moveCamera(LatLng(userLat, userLong), 16f, "My location")
+            moveCamera(LatLng(userLat, userLong), 13.5f, "My location")
             //drawCircle(LatLng(userLat, userLong), 400.0)
+            txtCosto.setText("")
+
+        }
+
+        btnReset.setOnClickListener {
+            userLat = realLatitude
+            userLong = realLongitude
+
+            markers.removeAll(markers)
+            updateMap()
+            getAddressName()
+            moveCamera(LatLng(userLat, userLong), 13.5f, "My location")
+            //drawCircle(LatLng(userLat, userLong), 400.0)
+            txtCosto.setText("")
 
         }
         // When click the hint selection, will trigger close keyboard function
@@ -86,6 +107,15 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
             AdapterView.OnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
                 var item:String =  parent.getItemAtPosition(position).toString()
                 Toast.makeText(applicationContext, "Item: ${item}", Toast.LENGTH_SHORT).show()
+                //val items = arrayOf("restaurant","store", "gym")
+
+                if(item.equals("comida")){
+                    item = "restaurant"
+                }else if(item.equals("tiendas")){
+                    item = "store"
+                }else if(item.equals("gym")){
+                    item = "gym"
+                }
                 getInfo(item)
             }
 
@@ -203,6 +233,12 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
 
                         userLat = currentLocation.latitude
                         userLong = currentLocation.longitude
+
+                        if(bandera == true){
+                            realLatitude = userLat
+                            realLongitude = userLong
+                            bandera = false
+                        }
 
 
                         var distanceInMeters = currentLocation.distanceTo(home)
@@ -655,7 +691,7 @@ class Mapa : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickLis
                     txtCosto.setText("Caro")
                     txtCosto.setTextColor(Color.parseColor("#d32f2f"))
                 }else{
-                    txtCosto.setText("Moderado")
+                    txtCosto.setText("Moderado Alto")
                     txtCosto.setTextColor(Color.parseColor("#f9a825"))
                 }
 
